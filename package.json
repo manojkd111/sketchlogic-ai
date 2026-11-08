@@ -1,0 +1,12 @@
+{
+  "name": "sketchlogic-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Convert sketches, whiteboards and spreadsheets into editable architecture diagrams.",
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "test:frontend": "npm --prefix frontend test",
+    "lint:frontend": "npm --prefix frontend run lint"
+  }
+}

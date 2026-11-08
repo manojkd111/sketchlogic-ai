@@ -1,0 +1,48 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+*.pem
+.aws/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Backend runtime data (SQLite DB + user uploads) — never commit user data
+backend/var/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Data & ML artifacts — large and/or private
+data/raw/*
+data/interim/*
+data/processed/*
+!data/**/.gitkeep
+ml/outputs/
+ml/checkpoints/
+*.safetensors
+*.gguf
+*.bin
+wandb/
+evaluations/results/*
+!evaluations/results/.gitkeep

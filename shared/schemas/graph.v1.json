@@ -1,0 +1,515 @@
+{
+  "$defs": {
+    "BoundingBox": {
+      "additionalProperties": false,
+      "description": "Location in the source image, normalised to [0, 1].",
+      "properties": {
+        "height": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Height",
+          "type": "number"
+        },
+        "width": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Width",
+          "type": "number"
+        },
+        "x": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "title": "BoundingBox",
+      "type": "object"
+    },
+    "Edge": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "direction": {
+          "$ref": "#/$defs/EdgeDirection",
+          "default": "forward"
+        },
+        "evidence": {
+          "$ref": "#/$defs/EdgeEvidence",
+          "default": "observed"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.:\\-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "rationale": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Why the model inferred this edge (inferred edges only).",
+          "title": "Rationale"
+        },
+        "source": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.:\\-]+$",
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.:\\-]+$",
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "target"
+      ],
+      "title": "Edge",
+      "type": "object"
+    },
+    "EdgeDirection": {
+      "enum": [
+        "forward",
+        "bidirectional",
+        "none"
+      ],
+      "title": "EdgeDirection",
+      "type": "string"
+    },
+    "EdgeEvidence": {
+      "enum": [
+        "observed",
+        "inferred"
+      ],
+      "title": "EdgeEvidence",
+      "type": "string"
+    },
+    "GraphMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Inference provider id, e.g. 'local'.",
+          "title": "Provider"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "title": "GraphMetadata",
+      "type": "object"
+    },
+    "Group": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.:\\-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 200,
+          "title": "Label",
+          "type": "string"
+        },
+        "parent_id": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_.:\\-]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Id"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "Group",
+      "type": "object"
+    },
+    "Node": {
+      "additionalProperties": false,
+      "properties": {
+        "attributes": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Attributes",
+          "type": "object"
+        },
+        "confidence": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "group_id": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_.:\\-]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group Id"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.:\\-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/NodeKind",
+          "default": "component"
+        },
+        "label": {
+          "maxLength": 200,
+          "title": "Label",
+          "type": "string"
+        },
+        "position": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Position"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "source_bbox": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BoundingBox"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "Node",
+      "type": "object"
+    },
+    "NodeKind": {
+      "enum": [
+        "component",
+        "service",
+        "database",
+        "queue",
+        "storage",
+        "actor",
+        "external",
+        "process",
+        "decision",
+        "start_end",
+        "note",
+        "unknown"
+      ],
+      "title": "NodeKind",
+      "type": "string"
+    },
+    "Origin": {
+      "enum": [
+        "ai_extracted",
+        "ai_modified",
+        "user_created",
+        "user_corrected",
+        "imported"
+      ],
+      "title": "Origin",
+      "type": "string"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "Position",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "locked": {
+          "default": false,
+          "description": "True when a user manually corrected this element. Automated changes require explicit approval.",
+          "title": "Locked",
+          "type": "boolean"
+        },
+        "origin": {
+          "$ref": "#/$defs/Origin",
+          "default": "ai_extracted"
+        }
+      },
+      "title": "Provenance",
+      "type": "object"
+    },
+    "SourceInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "filename": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Filename"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Height"
+        },
+        "kind": {
+          "$ref": "#/$defs/SourceKind"
+        },
+        "upload_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upload Id"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Width"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "SourceInfo",
+      "type": "object"
+    },
+    "SourceKind": {
+      "enum": [
+        "image",
+        "xlsx",
+        "sketch",
+        "manual"
+      ],
+      "title": "SourceKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A complete, versioned diagram.",
+  "properties": {
+    "edges": {
+      "items": {
+        "$ref": "#/$defs/Edge"
+      },
+      "maxItems": 5000,
+      "title": "Edges",
+      "type": "array"
+    },
+    "groups": {
+      "items": {
+        "$ref": "#/$defs/Group"
+      },
+      "maxItems": 500,
+      "title": "Groups",
+      "type": "array"
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.:\\-]+$",
+      "title": "Id",
+      "type": "string"
+    },
+    "metadata": {
+      "$ref": "#/$defs/GraphMetadata"
+    },
+    "nodes": {
+      "items": {
+        "$ref": "#/$defs/Node"
+      },
+      "maxItems": 2000,
+      "title": "Nodes",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "title": {
+      "default": "",
+      "maxLength": 200,
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id"
+  ],
+  "title": "GraphDocument",
+  "type": "object"
+}

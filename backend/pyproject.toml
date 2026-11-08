@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sketchlogic-backend"
+version = "0.1.0"
+description = "SketchLogic AI API: uploads, validation and versioned graph schema."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "pydantic>=2.9",
+  "pydantic-settings>=2.6",
+  "python-multipart>=0.0.18",
+  "pillow>=11.0",
+  "networkx>=3.4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-cov>=6.0",
+  "httpx2",  # Starlette's TestClient transport (replaces httpx)
+  "ruff>=0.8",
+  "mypy>=1.13",
+  "openpyxl>=3.1",
+]
+# Phase 3+: AWS Bedrock provider. Never installed or used unless explicitly enabled.
+aws = ["boto3>=1.35"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers"
+markers = [
+  "smoke: fast end-to-end checks that the service boots and core routes respond",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+ignore = ["B008"] # FastAPI Depends()/File() defaults
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["networkx.*", "PIL.*"]
+ignore_missing_imports = true

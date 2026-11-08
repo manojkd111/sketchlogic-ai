@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "id": "example-three-tier",
+  "title": "Three-tier web app (whiteboard photo)",
+  "groups": [
+    { "id": "aws", "label": "AWS Cloud" },
+    { "id": "private", "label": "Private subnet", "parent_id": "aws" }
+  ],
+  "nodes": [
+    { "id": "user", "label": "User", "kind": "actor", "confidence": 0.97 },
+    { "id": "lb", "label": "Load Balancer", "kind": "service", "group_id": "aws", "confidence": 0.93 },
+    { "id": "api", "label": "API Server", "kind": "service", "group_id": "private", "confidence": 0.91 },
+    {
+      "id": "db",
+      "label": "Postgres",
+      "kind": "database",
+      "group_id": "private",
+      "confidence": 0.88,
+      "provenance": { "origin": "user_corrected", "locked": true }
+    },
+    { "id": "cache", "label": "Redis", "kind": "storage", "group_id": "private", "confidence": 0.74 }
+  ],
+  "edges": [
+    { "id": "e1", "source": "user", "target": "lb", "label": "HTTPS", "evidence": "observed", "confidence": 0.95 },
+    { "id": "e2", "source": "lb", "target": "api", "evidence": "observed", "confidence": 0.9 },
+    { "id": "e3", "source": "api", "target": "db", "label": "SQL", "evidence": "observed", "confidence": 0.86 },
+    {
+      "id": "e4",
+      "source": "api",
+      "target": "cache",
+      "direction": "bidirectional",
+      "evidence": "inferred",
+      "confidence": 0.58,
+      "rationale": "Cache box sits beside the API with no visible arrow; services usually read/write a cache."
+    }
+  ],
+  "metadata": {
+    "source": { "kind": "image", "filename": "whiteboard.jpg", "width": 1920, "height": 1080 },
+    "provider": "mock",
+    "model": "mock-v0",
+    "created_at": "2026-11-08T00:00:00Z",
+    "warnings": []
+  }
+}
