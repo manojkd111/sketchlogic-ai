@@ -30,12 +30,13 @@ export interface LayoutResult {
   proposals: LayoutProposal[];
 }
 
+// Layer gap leaves room for the ~120px inferred-edge badge (label, confidence, accept/reject).
 const ROOT_OPTIONS = {
   "elk.algorithm": "layered",
   "elk.direction": "RIGHT",
   "elk.hierarchyHandling": "INCLUDE_CHILDREN",
   "elk.spacing.nodeNode": "40",
-  "elk.layered.spacing.nodeNodeBetweenLayers": "80",
+  "elk.layered.spacing.nodeNodeBetweenLayers": "140",
   "elk.edgeRouting": "ORTHOGONAL",
 };
 const GROUP_OPTIONS = {

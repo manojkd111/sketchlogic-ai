@@ -9,7 +9,8 @@
 
 ## Phase 2 checklist
 
-- [ ] `npm i @xyflow/react elkjs @excalidraw/excalidraw` (`@xyflow/react` 12.12.1, `elkjs` 0.12.1 done)
+- [x] `npm i @xyflow/react elkjs @excalidraw/excalidraw` (12.12.1 / 0.12.1 / 0.18.1; npm
+      `overrides` pin patched `lodash-es` and `nanoid` pulled in by Excalidraw's Mermaid import)
 - [x] `lib/graph-to-flow.ts` + tests (round-trip preserves ids, provenance, evidence).
       `GraphNode.position` is **absolute**; group boxes are derived from members.
 - [x] ELK layout in a web worker; respect groups as compound nodes
@@ -25,5 +26,6 @@
 - [ ] Deleting nodes/edges and adding new nodes in the editor
 - [x] Backend: `graphs` + `graph_versions` tables, `POST/GET/PUT /api/v1/graphs`
       (+ list, version history, optimistic concurrency via `base_version` → 409; TS client in `lib/api.ts`)
-- [ ] Excalidraw canvas exporting PNG into the existing upload flow
+- [x] Excalidraw canvas exporting PNG into the existing upload flow (`/sketch`; export scaled so
+      the short side is ≥512px; training consent opt-in as on the upload page)
 - [ ] Playwright e2e: upload → see validation → open editor

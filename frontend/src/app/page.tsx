@@ -1,17 +1,17 @@
+import Link from "next/link";
 import { HealthBadge } from "@/components/HealthBadge";
 import { UploadPanel } from "@/components/UploadPanel";
 
 const ROADMAP = [
-  { title: "Sketch canvas", body: "Draw a flow freehand with Excalidraw.", phase: "Phase 2" },
   {
     title: "AI extraction",
-    body: "Components, groups and connections, with inferred links flagged for review.",
+    body: "A local vision model replaces today's mock extractor; spreadsheets parsed directly.",
     phase: "Phase 3",
   },
   {
-    title: "Diagram editor",
-    body: "Editable React Flow graph with ELK.js auto layout.",
-    phase: "Phase 2",
+    title: "Natural-language edits",
+    body: "Describe a change; review it as a proposal before anything locked is touched.",
+    phase: "Phase 3",
   },
   {
     title: "Present & export",
@@ -35,6 +35,15 @@ export default function Home() {
 
       <main className="flex flex-col gap-8">
         <UploadPanel />
+        <p className="-mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
+          No photo handy?{" "}
+          <Link
+            href="/sketch"
+            className="font-medium text-indigo-600 underline dark:text-indigo-400"
+          >
+            Draw a sketch instead
+          </Link>
+        </p>
 
         <section aria-labelledby="roadmap-title">
           <h2 id="roadmap-title" className="mb-3 text-sm font-semibold text-zinc-500">
