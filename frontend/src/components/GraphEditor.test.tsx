@@ -105,6 +105,49 @@ describe("GraphEditor", () => {
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 
+  it("adds, renames, re-kinds and deletes nodes through the toolbar and inspector", async () => {
+    const placed = {
+      ...doc,
+      nodes: doc.nodes.map((n, i) => ({ ...n, position: { x: i * 300, y: 0 } })),
+    };
+    let version = 1;
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (_url, init) => {
+      if (!init?.body) return jsonResponse(record(placed));
+      const body = JSON.parse(init.body as string) as { document: GraphDocument };
+      version += 1;
+      return jsonResponse(record(body.document, version));
+    });
+    const sentDoc = (call: number) =>
+      (JSON.parse(fetchMock.mock.calls[call][1]?.body as string) as { document: GraphDocument })
+        .document;
+    const user = userEvent.setup();
+    render(<GraphEditor graphId="graph-1" elk={elk} />);
+
+    await user.click(await screen.findByRole("button", { name: "Add node" }));
+    const label = screen.getByLabelText("Label");
+    expect(label).toHaveValue("New node");
+    await user.clear(label);
+    await user.type(label, "Queue{Enter}");
+    await user.selectOptions(screen.getByLabelText("Kind"), "queue");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await screen.findByText("Saved version 2.");
+    const added = sentDoc(1).nodes[2];
+    expect(added).toMatchObject({
+      label: "Queue",
+      kind: "queue",
+      provenance: { origin: "user_created", locked: true },
+    });
+    expect(added.position).toEqual({ x: 300 + 180 + 80, y: 0 });
+
+    // The new node is still selected: delete it from the inspector.
+    await user.click(screen.getByRole("button", { name: "Delete node" }));
+    expect(screen.getByText(/Select a node, group or connection/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await screen.findByText("Saved version 3.");
+    expect(sentDoc(2).nodes.map((n) => n.id)).toEqual(["a", "b"]);
+    expect(sentDoc(2).edges.map((e) => e.id)).toEqual(["e1"]);
+  });
+
   it("rejecting removes the inferred edge", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(jsonResponse(record(doc)));
     const user = userEvent.setup();

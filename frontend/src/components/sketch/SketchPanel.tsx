@@ -88,23 +88,6 @@ export function SketchPanel() {
         )}
       </header>
 
-      <div aria-live="polite" className="text-sm">
-        {phase.name === "working" && <p className="px-4 py-2 text-zinc-600">{phase.step}</p>}
-        {phase.name === "done" && (
-          <p className="bg-emerald-50 px-4 py-2 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
-            Diagram extracted. Open it in the editor to review.
-          </p>
-        )}
-        {phase.name === "error" && (
-          <p
-            role="alert"
-            className="bg-red-50 px-4 py-2 text-red-700 dark:bg-red-950/50 dark:text-red-300"
-          >
-            {phase.message}
-          </p>
-        )}
-      </div>
-
       <div className="relative min-h-0 flex-1" aria-label="Sketch canvas">
         <SketchCanvas
           onReady={(h) => {
@@ -112,6 +95,31 @@ export function SketchPanel() {
             setReady(true);
           }}
         />
+        {/* Overlaid, not stacked above: moving the canvas would desync Excalidraw's cached
+            offsets and misplace strokes. */}
+        <div
+          aria-live="polite"
+          className="pointer-events-none absolute inset-x-0 bottom-16 z-10 flex justify-center text-sm"
+        >
+          {phase.name === "working" && (
+            <p className="rounded-lg bg-white/95 px-4 py-2 text-zinc-700 shadow dark:bg-zinc-900/95 dark:text-zinc-300">
+              {phase.step}
+            </p>
+          )}
+          {phase.name === "done" && (
+            <p className="rounded-lg bg-emerald-50 px-4 py-2 text-emerald-800 shadow dark:bg-emerald-950 dark:text-emerald-300">
+              Diagram extracted. Open it in the editor to review.
+            </p>
+          )}
+          {phase.name === "error" && (
+            <p
+              role="alert"
+              className="rounded-lg bg-red-50 px-4 py-2 text-red-700 shadow dark:bg-red-950 dark:text-red-300"
+            >
+              {phase.message}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

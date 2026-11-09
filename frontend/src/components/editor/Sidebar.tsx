@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { MAX_LABEL, pendingInferredEdges } from "@/lib/graph-edits";
-import type { GraphDocument, Provenance } from "@/lib/graph-schema";
+import { NODE_KINDS, type GraphDocument, type NodeKind, type Provenance } from "@/lib/graph-schema";
 import { useEditorActions } from "./EditorActions";
 
 export type Selection = { kind: "node" | "edge" | "group"; id: string } | null;
@@ -11,6 +11,8 @@ interface SidebarProps {
   doc: GraphDocument;
   selection: Selection;
   onRename(selection: NonNullable<Selection>, label: string): void;
+  onDelete(selection: NonNullable<Selection>): void;
+  onSetKind(nodeId: string, kind: NodeKind): void;
 }
 
 const pct = (c: number) => `${Math.round(c * 100)}%`;
@@ -22,11 +24,11 @@ const ORIGIN_LABEL: Record<Provenance["origin"], string> = {
   imported: "Imported",
 };
 
-export function Sidebar({ doc, selection, onRename }: SidebarProps) {
+export function Sidebar(props: SidebarProps) {
   return (
     <aside className="flex w-72 shrink-0 flex-col gap-6 overflow-y-auto border-l border-zinc-200 p-4 text-sm dark:border-zinc-800">
-      <ReviewList doc={doc} />
-      <Inspector doc={doc} selection={selection} onRename={onRename} />
+      <ReviewList doc={props.doc} />
+      <Inspector {...props} />
     </aside>
   );
 }
@@ -85,7 +87,7 @@ function ReviewList({ doc }: { doc: GraphDocument }) {
   );
 }
 
-function Inspector({ doc, selection, onRename }: SidebarProps) {
+function Inspector({ doc, selection, onRename, onDelete, onSetKind }: SidebarProps) {
   const inputId = useId();
   const el =
     selection?.kind === "node"
@@ -131,13 +133,26 @@ function Inspector({ doc, selection, onRename }: SidebarProps) {
         }}
         className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
       />
+      {"kind" in el && (
+        <>
+          <label htmlFor={`${inputId}-kind`} className="mt-3 mb-1 block text-xs text-zinc-500">
+            Kind
+          </label>
+          <select
+            id={`${inputId}-kind`}
+            value={el.kind}
+            onChange={(e) => onSetKind(el.id, e.currentTarget.value as NodeKind)}
+            className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+          >
+            {NODE_KINDS.map((k) => (
+              <option key={k} value={k}>
+                {k.replace("_", " ")}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
       <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-        {"kind" in el && (
-          <>
-            <dt className="text-zinc-500">Kind</dt>
-            <dd>{el.kind.replace("_", " ")}</dd>
-          </>
-        )}
         {"evidence" in el && (
           <>
             <dt className="text-zinc-500">Evidence</dt>
@@ -154,6 +169,14 @@ function Inspector({ doc, selection, onRename }: SidebarProps) {
           🔒 Locked. Automated changes to this element will need your approval.
         </p>
       )}
+      <button
+        type="button"
+        onClick={() => onDelete(selection)}
+        className="mt-4 rounded-md px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+      >
+        Delete {selection.kind === "edge" ? "connection" : selection.kind}
+        {selection.kind === "group" ? " (keeps its contents)" : ""}
+      </button>
     </section>
   );
 }

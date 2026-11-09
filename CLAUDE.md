@@ -1,7 +1,7 @@
 # CLAUDE.md: SketchLogic AI
 
 SketchLogic converts whiteboard photos, hand-drawn flows, spreadsheet screenshots and `.xlsx` files
-into clean, editable architecture/process diagrams. **Current phase: 1 (foundation) complete.**
+into clean, editable architecture/process diagrams. **Current phase: 2 (editor & sketch canvas) complete; 3 (AI extraction) next.**
 See `docs/roadmap.md` for what comes next. Don't start model training or AWS work unless asked.
 
 ## Repo map
@@ -28,6 +28,8 @@ cd backend;  .venv\Scripts\python -m pytest           # backend tests (-m smoke 
              .venv\Scripts\python -m mypy app scripts
              .venv\Scripts\python -m scripts.export_schema   # after ANY schema change
 cd frontend; npm test; npm run typecheck; npm run lint; npm run format; npm run build
+             npm run e2e     # Playwright; reuses running dev servers locally
+                             # (PLAYWRIGHT_CHANNEL=chrome to use installed Chrome)
 ```
 
 On Windows, uv may need `UV_SYSTEM_CERTS=1` (HTTPS inspection on this machine).

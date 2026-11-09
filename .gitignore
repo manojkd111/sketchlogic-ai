@@ -46,3 +46,8 @@ ml/checkpoints/
 wandb/
 evaluations/results/*
 !evaluations/results/.gitkeep
+
+# Playwright
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   acceptInferredEdge,
+  addNode,
+  deleteElements,
+  setNodeKind,
   applyUserEdit,
   connectNodes,
   pendingInferredEdges,
@@ -128,5 +131,87 @@ describe("edit operations", () => {
     expect(fresh.edges[0].id).toMatch(/^[A-Za-z0-9_.:-]+$/);
     expect(connectNodes(base, "a", "a")).toBe(base);
     expect(connectNodes(base, "a", "zzz")).toBe(base);
+  });
+});
+
+describe("deleteElements", () => {
+  it("removes a node together with its connections", () => {
+    const out = deleteElements(base, { nodes: ["a"] });
+    expect(out.nodes.map((n) => n.id)).toEqual(["b"]);
+    expect(out.edges).toEqual([]);
+    expect(out.nodes[0]).toBe(base.nodes[1]); // untouched survivor keeps provenance
+  });
+
+  it("removes just an edge", () => {
+    const out = deleteElements(base, { edges: ["e2"] });
+    expect(out.edges.map((e) => e.id)).toEqual(["e1"]);
+    expect(out.nodes).toEqual(base.nodes);
+  });
+
+  it("deleting a group keeps its contents and re-homes them, locking what moved", () => {
+    const nested: GraphDocument = {
+      ...base,
+      groups: [
+        { id: "outer", label: "Outer", confidence: 1, provenance: ai },
+        { id: "vpc", label: "VPC", parent_id: "outer", confidence: 1, provenance: ai },
+        { id: "sub", label: "Sub", parent_id: "vpc", confidence: 1, provenance: ai },
+      ],
+    };
+    const out = deleteElements(nested, { groups: ["vpc"] });
+    expect(out.groups.map((g) => [g.id, g.parent_id ?? null])).toEqual([
+      ["outer", null],
+      ["sub", "outer"],
+    ]);
+    expect(out.groups[1].provenance).toEqual(corrected);
+    expect(out.nodes.find((n) => n.id === "b")).toMatchObject({
+      group_id: "outer",
+      provenance: corrected,
+    });
+    expect(out.edges).toEqual(base.edges);
+  });
+
+  it("deleting nested groups together sends members to the nearest survivor", () => {
+    const out = deleteElements(base, { groups: ["vpc"] });
+    expect(out.nodes.find((n) => n.id === "b")?.group_id).toBeNull();
+  });
+
+  it("an empty request is a no-op", () => {
+    expect(deleteElements(base, {})).toBe(base);
+  });
+});
+
+describe("addNode / setNodeKind", () => {
+  it("adds a locked user node to the right of the diagram with a unique id", () => {
+    const { doc, id } = addNode(base, { width: 180 });
+    const node = doc.nodes.find((n) => n.id === id);
+    expect(node).toMatchObject({
+      label: "New node",
+      kind: "component",
+      confidence: 1,
+      position: { x: 1 + 180 + 80, y: 2 },
+      provenance: { origin: "user_created", locked: true },
+    });
+    const second = addNode(doc, { width: 180, label: "  Queue ", kind: "queue" });
+    expect(second.id).not.toBe(id);
+    expect(second.doc.nodes.at(-1)).toMatchObject({ label: "Queue", kind: "queue" });
+  });
+
+  it("places the first node at the origin of an empty diagram", () => {
+    const { doc } = addNode({ ...base, nodes: [], edges: [] }, { width: 180 });
+    expect(doc.nodes[0].position).toEqual({ x: 0, y: 0 });
+  });
+
+  it("changing a node's kind locks it", () => {
+    const out = setNodeKind(base, "a", "database");
+    expect(out.nodes[0]).toMatchObject({ kind: "database", provenance: corrected });
+  });
+});
+
+it("editing a user-created element keeps it user_created (not 'corrected')", () => {
+  const { doc, id } = addNode(base, { width: 180 });
+  const renamed = renameNode(doc, id, "Queue");
+  expect(renamed.nodes.find((n) => n.id === id)?.provenance).toEqual({
+    origin: "user_created",
+    locked: true,
   });
 });

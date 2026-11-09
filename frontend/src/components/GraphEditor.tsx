@@ -20,16 +20,22 @@ import { ApiError, getGraph, saveGraph } from "@/lib/api";
 import { applyProposals, layoutGraph, type ElkLike, type LayoutProposal } from "@/lib/elk-layout";
 import {
   acceptInferredEdge,
+  addNode,
   applyUserEdit,
   connectNodes,
+  deleteElements,
   pendingInferredEdges,
   rejectInferredEdge,
   renameEdge,
   renameGroup,
   renameNode,
+  setNodeKind,
+  type DeleteRequest,
 } from "@/lib/graph-edits";
-import type { GraphDocument } from "@/lib/graph-schema";
+import type { GraphDocument, NodeKind } from "@/lib/graph-schema";
 import {
+  NODE_WIDTH,
+  flowNodeId,
   flowToGraph,
   graphToFlow,
   schemaNodeId,
@@ -61,6 +67,14 @@ function decorate(flow: FlowGraph): FlowGraph {
   };
 }
 
+/** Carry React Flow's `selected` flags over to rebuilt elements with the same id. */
+function keepSelection<T extends { id: string; selected?: boolean }>(prev: T[], next: T[]): T[] {
+  const selected = new Set(prev.filter((x) => x.selected).map((x) => x.id));
+  return selected.size
+    ? next.map((x) => (selected.has(x.id) ? { ...x, selected: true } : x))
+    : next;
+}
+
 type Status = { tone: "info" | "error"; text: string; conflict?: boolean } | null;
 
 export interface GraphEditorProps {
@@ -89,12 +103,12 @@ export function GraphEditor({ graphId, elk }: GraphEditorProps) {
     return workerElk.current;
   }, [elk]);
 
-  /** Make `next` the current document and rebuild the canvas from it. */
+  /** Make `next` the current document and rebuild the canvas, keeping the user's selection. */
   const commit = useCallback((next: GraphDocument) => {
     setDoc(next);
     const flow = decorate(graphToFlow(next));
-    setNodes(flow.nodes);
-    setEdges(flow.edges);
+    setNodes((prev) => keepSelection(prev, flow.nodes));
+    setEdges((prev) => keepSelection(prev, flow.edges));
   }, []);
 
   const runLayout = useCallback(
@@ -155,7 +169,8 @@ export function GraphEditor({ graphId, elk }: GraphEditorProps) {
     [doc, commit, labels],
   );
 
-  // Deleting is not supported yet, so "remove" changes (e.g. Backspace) are ignored.
+  // The canvas is rebuilt from `doc`, so React Flow's own "remove" changes are ignored here and
+  // deletions go through `onDelete` -> `deleteElements` instead.
   const onNodesChange = useCallback(
     (changes: NodeChange<GraphFlowNode>[]) =>
       setNodes((ns) =>
@@ -217,6 +232,51 @@ export function GraphEditor({ graphId, elk }: GraphEditorProps) {
     [doc, commit],
   );
 
+  const removeSelected = useCallback(
+    (req: DeleteRequest) => {
+      if (!doc) return;
+      commit(deleteElements(doc, req));
+      setSelection(null);
+    },
+    [doc, commit],
+  );
+
+  // Backspace/Delete. React Flow also passes children of a deleted group and edges attached to
+  // deleted nodes; only act on what the user selected (group contents are kept).
+  const onDelete = useCallback(
+    ({ nodes: ns, edges: es }: { nodes: GraphFlowNode[]; edges: GraphFlowEdge[] }) => {
+      const picked = ns.filter((n) => n.selected);
+      removeSelected({
+        nodes: picked.filter((n) => n.data.role === "node").map((n) => n.data.element.id),
+        groups: picked.filter((n) => n.data.role === "group").map((n) => n.data.element.id),
+        edges: es.flatMap((e) => (e.selected && e.data ? [e.data.element.id] : [])),
+      });
+    },
+    [removeSelected],
+  );
+
+  const onDeleteSelection = useCallback(
+    (sel: NonNullable<Selection>) =>
+      removeSelected({ [`${sel.kind}s` as "nodes" | "edges" | "groups"]: [sel.id] }),
+    [removeSelected],
+  );
+
+  const onSetKind = useCallback(
+    (id: string, kind: NodeKind) => {
+      if (doc) commit(setNodeKind(doc, id, kind));
+    },
+    [doc, commit],
+  );
+
+  const onAddNode = () => {
+    if (!doc) return;
+    const added = addNode(doc, { width: NODE_WIDTH });
+    commit(added.doc);
+    const fid = flowNodeId(added.id);
+    setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === fid })));
+    setSelection({ kind: "node", id: added.id });
+  };
+
   const save = async () => {
     if (!doc || !saved) return;
     setBusy("saving");
@@ -277,6 +337,14 @@ export function GraphEditor({ graphId, elk }: GraphEditorProps) {
                   : ""}
           </span>
           <div className="ml-auto flex gap-2">
+            <button
+              type="button"
+              onClick={onAddNode}
+              disabled={!!busy}
+              className="rounded-lg px-3 py-1.5 font-medium hover:bg-zinc-100 disabled:opacity-50 dark:hover:bg-zinc-800"
+            >
+              Add node
+            </button>
             <button
               type="button"
               onClick={() => void runLayout(doc)}
@@ -355,7 +423,8 @@ export function GraphEditor({ graphId, elk }: GraphEditorProps) {
               onNodeDragStop={onNodeDragStop}
               onConnect={onConnect}
               onSelectionChange={onSelectionChange}
-              deleteKeyCode={null}
+              onDelete={onDelete}
+              deleteKeyCode={["Backspace", "Delete"]}
               fitView
               minZoom={0.1}
             >
@@ -364,7 +433,13 @@ export function GraphEditor({ graphId, elk }: GraphEditorProps) {
               <MiniMap pannable zoomable />
             </ReactFlow>
           </div>
-          <Sidebar doc={doc} selection={selection} onRename={onRename} />
+          <Sidebar
+            doc={doc}
+            selection={selection}
+            onRename={onRename}
+            onDelete={onDeleteSelection}
+            onSetKind={onSetKind}
+          />
         </div>
       </div>
     </EditorActionsContext.Provider>
