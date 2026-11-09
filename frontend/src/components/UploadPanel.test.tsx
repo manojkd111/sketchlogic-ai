@@ -48,6 +48,51 @@ describe("UploadPanel", () => {
     expect(body.get("training_consent")).toBe("false");
   });
 
+  it("extracts the upload and links to the editor", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(jsonResponse(validResult))
+      .mockResolvedValueOnce(
+        jsonResponse({ ...validResult, id: "abc123", sha256: "f", training_consent: false }, 201),
+      )
+      .mockResolvedValueOnce(jsonResponse({ id: "graph-abc123", version: 1 }, 201));
+    const user = userEvent.setup();
+    render(<UploadPanel />);
+    await user.upload(screen.getByLabelText("Choose file"), pngFile());
+    await user.click(await screen.findByRole("button", { name: "Upload" }));
+    await user.click(await screen.findByRole("button", { name: "Extract diagram" }));
+
+    const open = await screen.findByRole("link", { name: "Open in editor" });
+    expect(open).toHaveAttribute("href", "/graphs/graph-abc123");
+    expect(fetchMock.mock.calls[2][0]).toMatch(/\/api\/v1\/uploads\/abc123\/extract$/);
+    expect(fetchMock.mock.calls[2][1]?.method).toBe("POST");
+  });
+
+  it("shows extraction errors", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(jsonResponse(validResult))
+      .mockResolvedValueOnce(
+        jsonResponse({ ...validResult, id: "abc123", sha256: "f", training_consent: false }, 201),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            error: {
+              code: "provider_unavailable",
+              message: "provider 'local' is not implemented yet",
+            },
+          },
+          503,
+        ),
+      );
+    const user = userEvent.setup();
+    render(<UploadPanel />);
+    await user.upload(screen.getByLabelText("Choose file"), pngFile());
+    await user.click(await screen.findByRole("button", { name: "Upload" }));
+    await user.click(await screen.findByRole("button", { name: "Extract diagram" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("not implemented yet");
+  });
+
   it("shows backend validation errors", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       jsonResponse(

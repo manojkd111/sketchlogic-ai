@@ -30,6 +30,8 @@ class GraphErrorCode(StrEnum):
     VERSION_NOT_FOUND = "graph_version_not_found"
     VERSION_CONFLICT = "graph_version_conflict"
     ID_MISMATCH = "graph_id_mismatch"
+    UPLOAD_NOT_FOUND = "upload_not_found"
+    PROVIDER_UNAVAILABLE = "provider_unavailable"
 
 
 class GraphStoreError(Exception):

@@ -32,6 +32,9 @@ const EDGE_PREFIX = "e:";
 export const flowNodeId = (id: string) => NODE_PREFIX + id;
 export const flowGroupId = (id: string) => GROUP_PREFIX + id;
 export const flowEdgeId = (id: string) => EDGE_PREFIX + id;
+/** Schema node id for a React Flow node id, or null if it is not a graph node (e.g. a group). */
+export const schemaNodeId = (flowId: string): string | null =>
+  flowId.startsWith(NODE_PREFIX) ? flowId.slice(NODE_PREFIX.length) : null;
 
 /** Geometry as emitted by `graphToFlow`; used to detect what the user changed. */
 interface Emitted {

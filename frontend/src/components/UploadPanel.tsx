@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
   ApiError,
   createUpload,
+  extractUpload,
   validateUpload,
   type UploadResponse,
   type ValidationResult,
@@ -16,6 +18,8 @@ type Phase =
   | { name: "valid"; file: File; result: ValidationResult }
   | { name: "uploading"; file: File; result: ValidationResult }
   | { name: "uploaded"; file: File; upload: UploadResponse }
+  | { name: "extracting"; file: File; upload: UploadResponse }
+  | { name: "extracted"; file: File; upload: UploadResponse; graphId: string }
   | { name: "error"; file?: File; message: string };
 
 export function UploadPanel() {
@@ -53,6 +57,18 @@ export function UploadPanel() {
     }
   };
 
+  const handleExtract = async () => {
+    if (phase.name !== "uploaded") return;
+    const { file, upload } = phase;
+    setPhase({ name: "extracting", file, upload });
+    try {
+      const graph = await extractUpload(upload.id);
+      setPhase({ name: "extracted", file, upload, graphId: graph.id });
+    } catch (err) {
+      setPhase({ name: "error", file, message: errorMessage(err) });
+    }
+  };
+
   const reset = () => {
     setPhase({ name: "idle" });
     if (inputRef.current) inputRef.current.value = "";
@@ -62,7 +78,7 @@ export function UploadPanel() {
   const details =
     phase.name === "valid" || phase.name === "uploading"
       ? phase.result
-      : phase.name === "uploaded"
+      : phase.name === "uploaded" || phase.name === "extracting" || phase.name === "extracted"
         ? phase.upload
         : null;
 
@@ -205,14 +221,35 @@ export function UploadPanel() {
           </>
         )}
 
-        {phase.name === "uploaded" && (
-          <div className="flex items-center justify-between gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+        {(phase.name === "uploaded" ||
+          phase.name === "extracting" ||
+          phase.name === "extracted") && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
             <span>
               Uploaded · id <code className="font-mono text-xs">{phase.upload.id}</code>
             </span>
-            <button type="button" onClick={reset} className="font-medium underline">
-              Upload another
-            </button>
+            <span className="flex items-center gap-3">
+              {phase.name === "extracted" ? (
+                <Link
+                  href={`/graphs/${encodeURIComponent(phase.graphId)}`}
+                  className="rounded-lg bg-indigo-600 px-3 py-1.5 font-medium text-white hover:bg-indigo-500"
+                >
+                  Open in editor
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleExtract}
+                  disabled={phase.name === "extracting"}
+                  className="rounded-lg bg-indigo-600 px-3 py-1.5 font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+                >
+                  {phase.name === "extracting" ? "Extracting…" : "Extract diagram"}
+                </button>
+              )}
+              <button type="button" onClick={reset} className="font-medium underline">
+                Upload another
+              </button>
+            </span>
           </div>
         )}
         {phase.name === "error" && (

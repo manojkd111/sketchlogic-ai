@@ -9,12 +9,20 @@
 
 ## Phase 2 checklist
 
-- [ ] `npm i @xyflow/react elkjs @excalidraw/excalidraw` (`@xyflow/react` 12.12.1 done)
+- [ ] `npm i @xyflow/react elkjs @excalidraw/excalidraw` (`@xyflow/react` 12.12.1, `elkjs` 0.12.1 done)
 - [x] `lib/graph-to-flow.ts` + tests (round-trip preserves ids, provenance, evidence).
       `GraphNode.position` is **absolute**; group boxes are derived from members.
-- [ ] ELK layout in a web worker; respect groups as compound nodes
-- [ ] Inferred edges dashed + confidence badge; accept → `observed`/`user_corrected`
-- [ ] Any manual edit → `origin=user_corrected`, `locked=true`
+- [x] ELK layout in a web worker; respect groups as compound nodes
+      (`lib/elk-layout.ts`, `lib/layout.worker.ts`). Pinned locked nodes are never moved;
+      their layout positions are offered as a proposal the user approves.
+- [x] Inferred edges dashed + confidence badge; accept → `observed`/`user_corrected`
+      (inline on the canvas and in the sidebar review list; reject removes the edge)
+- [x] Any manual edit → `origin=user_corrected`, `locked=true` (`lib/graph-edits.ts`
+      `applyUserEdit`; new user elements → `user_created` + locked)
+- [x] Editor page `/graphs/[id]` (`components/GraphEditor.tsx`): drag, connect, rename,
+      save with 409 conflict handling. Backend `POST /api/v1/uploads/{id}/extract`
+      (mock provider; never overwrites an existing graph)
+- [ ] Deleting nodes/edges and adding new nodes in the editor
 - [x] Backend: `graphs` + `graph_versions` tables, `POST/GET/PUT /api/v1/graphs`
       (+ list, version history, optimistic concurrency via `base_version` → 409; TS client in `lib/api.ts`)
 - [ ] Excalidraw canvas exporting PNG into the existing upload flow

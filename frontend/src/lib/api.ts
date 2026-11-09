@@ -125,6 +125,13 @@ export function createUpload(file: File, trainingConsent = false): Promise<Uploa
   return request<UploadResponse>("/uploads", { method: "POST", body: form });
 }
 
+/** Extract a graph from a stored upload. Returns the existing graph if already extracted. */
+export function extractUpload(uploadId: string): Promise<GraphRecord> {
+  return request<GraphRecord>(`/uploads/${encodeURIComponent(uploadId)}/extract`, {
+    method: "POST",
+  });
+}
+
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const graphPath = (id: string) => `/graphs/${encodeURIComponent(id)}`;
 

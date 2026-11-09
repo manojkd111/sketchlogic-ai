@@ -5,12 +5,14 @@ import re
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel, Field
 
 from app.api.deps import DbDep, SettingsDep
 from app.core.config import Settings
 from app.db.repository import UploadRow, utcnow
+from app.services.extraction import extract_upload
+from app.services.graph_store import GraphRecord
 from app.services.upload_validation import (
     ErrorCode,
     FileKind,
@@ -23,6 +25,7 @@ router = APIRouter(prefix="/uploads", tags=["uploads"])
 
 _CHUNK = 1024 * 1024
 _SAFE_NAME = re.compile(r"[^A-Za-z0-9._ \-]+")
+_UPLOAD_ID = re.compile(r"[0-9a-f]{32}")
 
 
 class ValidationResult(BaseModel):
@@ -128,9 +131,19 @@ async def create_upload(
     )
 
 
+@router.post("/{upload_id}/extract", response_model=GraphRecord)
+def extract(upload_id: str, settings: SettingsDep, db: DbDep, response: Response) -> GraphRecord:
+    """Extract a graph from a stored upload (201). If already extracted, return it as-is (200)."""
+    if not _UPLOAD_ID.fullmatch(upload_id):
+        raise HTTPException(status_code=404, detail="Upload not found")
+    record, created = extract_upload(db, settings, upload_id)
+    response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+    return record
+
+
 @router.get("/{upload_id}", response_model=UploadResponse)
 def get_upload(upload_id: str, db: DbDep) -> UploadResponse:
-    if not re.fullmatch(r"[0-9a-f]{32}", upload_id):
+    if not _UPLOAD_ID.fullmatch(upload_id):
         raise HTTPException(status_code=404, detail="Upload not found")
     row = db.get_upload(upload_id)
     if row is None:
