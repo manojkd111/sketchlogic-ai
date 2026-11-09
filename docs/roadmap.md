@@ -31,3 +31,14 @@
       the short side is ≥512px; training consent opt-in as on the upload page)
 - [x] Playwright e2e (`frontend/e2e/`, `npm run e2e`, CI job `e2e`): upload → validation →
       extract → review/accept → save → reload; mismatched-bytes rejection; sketch → editor
+
+## Phase 3 checklist
+
+- [x] XLSX import (`backend/app/services/xlsx_import.py`): edge lists, adjacency matrices,
+      optional `Nodes` sheet for kinds and groups; formulas never evaluated. See
+      `docs/architecture.md#spreadsheet-import-xlsx`.
+- [ ] Synthetic data generator (rendered diagrams + ground-truth `GraphDocument`s)
+- [ ] `local` provider: Qwen2.5-VL-3B served locally behind `InferenceProvider`
+- [ ] LoRA fine-tune (Unsloth/PEFT/TRL) on consented + synthetic data
+- [ ] Evaluation harness (`evaluations/`): node/edge precision-recall, inferred-edge calibration
+- [ ] NL modifications as structured patch ops; ops on locked elements need approval

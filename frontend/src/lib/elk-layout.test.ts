@@ -30,6 +30,10 @@ describe("toElkGraph", () => {
     expect(priv?.children?.map((c) => c.id).sort()).toEqual(["n:api", "n:cache", "n:db"]);
     expect(g.edges).toHaveLength(4);
     expect(g.layoutOptions?.["elk.hierarchyHandling"]).toBe("INCLUDE_CHILDREN");
+    // Options do not inherit into compound nodes: groups carry the same spacing.
+    expect(aws?.layoutOptions?.["elk.layered.spacing.nodeNodeBetweenLayers"]).toBe(
+      g.layoutOptions?.["elk.layered.spacing.nodeNodeBetweenLayers"],
+    );
   });
 });
 

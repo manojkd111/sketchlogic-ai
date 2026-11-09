@@ -57,3 +57,21 @@ with status 413 (too large), 415 (unsupported type) or 422 (invalid content). Co
 | Image side | 32 px – 12,000 px, ≤ 40 MP total; full Pillow decode |
 | XLSX | Must contain `[Content_Types].xml` + `xl/workbook.xml`; no `vbaProject.bin`; ≤ 100 MiB uncompressed; CRC-checked; no DOCTYPE |
 | Filename | Directory parts stripped, unsafe chars replaced; stored under a random id |
+
+## Spreadsheet import (`.xlsx`)
+
+`POST /api/v1/uploads/{id}/extract` parses workbooks deterministically with
+`backend/app/services/xlsx_import.py`; no model is involved. Images go to the configured
+`InferenceProvider`.
+
+| Layout | How it is recognised |
+| --- | --- |
+| Edge list | A header row (within the first 10 rows) with a source column (`From`, `Source`, `Src`, `Parent`, …) and a target column (`To`, `Target`, `Destination`, `Child`, …). Optional `Label`/`Relationship`/`Protocol` and `Direction` (`both`, `none`) columns. |
+| Adjacency matrix | Node names across the first row and down the first column (≥ 50 % overlap). Non-empty cells other than `0`/`no`/`-` are edges row → column; text other than `1`/`x`/`yes`/`✓` becomes the label. |
+| `Nodes` sheet (optional) | `Name`/`Id`, `Label`, `Type`/`Kind` (mapped to `NodeKind`, e.g. "Postgres DB" → database, "Kafka topic" → queue), `Group` (creates groups). |
+
+The first sheet that matches a layout is used; other sheets are listed in `metadata.warnings`.
+Everything imported is `evidence=observed`, `confidence=1.0`, `provenance.origin=imported`.
+Workbooks are opened with `read_only=True, data_only=True`: formulas are never evaluated and
+formula text is never imported. Over 2,000 nodes, 5,000 connections or 20,000 rows per sheet is
+rejected (`xlsx_no_graph`, 422) rather than silently truncated.

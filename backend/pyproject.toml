@@ -16,6 +16,7 @@ dependencies = [
   "python-multipart>=0.0.18",
   "pillow>=11.0",
   "networkx>=3.4",
+  "openpyxl>=3.1",  # .xlsx graph import (app/services/xlsx_import.py)
 ]
 
 [project.optional-dependencies]
@@ -25,7 +26,7 @@ dev = [
   "httpx2",  # Starlette's TestClient transport (replaces httpx)
   "ruff>=0.8",
   "mypy>=1.13",
-  "openpyxl>=3.1",
+  "types-openpyxl",
 ]
 # Phase 3+: AWS Bedrock provider. Never installed or used unless explicitly enabled.
 aws = ["boto3>=1.35"]

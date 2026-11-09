@@ -73,3 +73,25 @@ test("a sketch goes from the canvas to the editor", async ({ page }) => {
   await expect(page).toHaveURL(/\/graphs\/graph-[0-9a-f]{32}$/);
   await expect(page.locator(".react-flow__node")).toHaveCount(3);
 });
+
+test("a spreadsheet is imported as an observed graph with groups and kinds", async ({ page }) => {
+  await page.goto("/");
+  await page
+    .getByLabel("Choose file")
+    .setInputFiles(path.join(__dirname, "fixtures", "services.xlsx"));
+  await expect(page.getByText("Connections, Nodes")).toBeVisible();
+
+  await page.getByRole("button", { name: "Upload" }).click();
+  await page.getByRole("button", { name: "Extract diagram" }).click();
+  await page.getByRole("link", { name: "Open in editor" }).click();
+
+  await expect(page.getByRole("heading", { name: "services" })).toBeVisible();
+  await expect(page.locator(".react-flow__node-graphNode")).toHaveCount(4);
+  await expect(page.locator(".react-flow__node-graphGroup")).toHaveCount(1);
+  await expect(page.getByText("Private subnet")).toBeVisible();
+  // Imported connections are observed, so there is nothing to review.
+  await expect(page.getByText("Nothing to review.")).toBeVisible();
+  await expect(page.locator(".react-flow__node", { hasText: "Orders DB" })).toContainText(
+    "database",
+  );
+});

@@ -32,6 +32,7 @@ class GraphErrorCode(StrEnum):
     ID_MISMATCH = "graph_id_mismatch"
     UPLOAD_NOT_FOUND = "upload_not_found"
     PROVIDER_UNAVAILABLE = "provider_unavailable"
+    XLSX_NO_GRAPH = "xlsx_no_graph"
 
 
 class GraphStoreError(Exception):

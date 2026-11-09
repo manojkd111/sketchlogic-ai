@@ -31,15 +31,21 @@ export interface LayoutResult {
 }
 
 // Layer gap leaves room for the ~120px inferred-edge badge (label, confidence, accept/reject).
+// ELK options do not inherit into compound nodes, so groups repeat the spacing.
+const SPACING = {
+  "elk.spacing.nodeNode": "40",
+  "elk.layered.spacing.nodeNodeBetweenLayers": "140",
+  "elk.spacing.edgeLabel": "8",
+};
 const ROOT_OPTIONS = {
   "elk.algorithm": "layered",
   "elk.direction": "RIGHT",
   "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-  "elk.spacing.nodeNode": "40",
-  "elk.layered.spacing.nodeNodeBetweenLayers": "140",
   "elk.edgeRouting": "ORTHOGONAL",
+  ...SPACING,
 };
 const GROUP_OPTIONS = {
+  ...SPACING,
   "elk.padding": `[top=${GROUP_PADDING + GROUP_HEADER},left=${GROUP_PADDING},bottom=${GROUP_PADDING},right=${GROUP_PADDING}]`,
 };
 

@@ -1,4 +1,7 @@
-"""Upload -> GraphDocument extraction via the configured InferenceProvider.
+"""Upload -> GraphDocument extraction.
+
+Images go to the configured InferenceProvider; .xlsx workbooks are parsed deterministically by
+`xlsx_import` (no model involved).
 
 Extraction never overwrites an existing graph: if this upload was already extracted, the stored
 graph (which may contain user corrections) is returned unchanged. Re-extraction that proposes
@@ -14,6 +17,7 @@ from app.inference.providers import get_provider
 from app.schemas.graph import GraphDocument, SourceKind
 from app.services import graph_store
 from app.services.graph_store import GraphErrorCode, GraphRecord, GraphStoreError
+from app.services.xlsx_import import XlsxImportError, import_xlsx
 
 
 def graph_id_for_upload(upload_id: str) -> str:
@@ -33,9 +37,20 @@ def extract_upload(db: Database, settings: Settings, upload_id: str) -> tuple[Gr
         return graph_store.get_graph(db, graph_id), False
 
     content = (settings.uploads_dir / row.storage_path).read_bytes()
+
+    # Spreadsheets hold the graph as data: parse them deterministically, no model needed.
+    if row.kind == "xlsx":
+        try:
+            doc = import_xlsx(
+                content, graph_id=graph_id, upload_id=upload_id, filename=row.original_name
+            )
+        except XlsxImportError as exc:
+            raise GraphStoreError(GraphErrorCode.XLSX_NO_GRAPH, str(exc), status_code=422) from exc
+        return graph_store.create_graph(db, doc), True
+
     request = ExtractionRequest(
         upload_id=upload_id,
-        source_kind=SourceKind.XLSX if row.kind == "xlsx" else SourceKind.IMAGE,
+        source_kind=SourceKind.IMAGE,
         media_type=row.media_type,
         content=content,
     )
