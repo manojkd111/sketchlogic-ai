@@ -37,8 +37,11 @@
 - [x] XLSX import (`backend/app/services/xlsx_import.py`): edge lists, adjacency matrices,
       optional `Nodes` sheet for kinds and groups; formulas never evaluated. See
       `docs/architecture.md#spreadsheet-import-xlsx`.
-- [ ] Synthetic data generator (rendered diagrams + ground-truth `GraphDocument`s)
+- [x] Synthetic data generator (`ml/sketchlogic_ml/synth`): whiteboard PNG + gold
+      `GraphDocument` + manifest with provenance and stable splits
 - [ ] `local` provider: Qwen2.5-VL-3B served locally behind `InferenceProvider`
 - [ ] LoRA fine-tune (Unsloth/PEFT/TRL) on consented + synthetic data
-- [ ] Evaluation harness (`evaluations/`): node/edge precision-recall, inferred-edge calibration
+- [x] Evaluation harness (`evaluations/sketchlogic_eval`): schema validity, node/edge P/R/F1,
+      labels, groups, inferred-edge calibration (ECE); predictions via the HTTP API.
+      Baseline: mock provider 0 % node/edge F1 on synthetic test split
 - [ ] NL modifications as structured patch ops; ops on locked elements need approval

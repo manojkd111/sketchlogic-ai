@@ -17,6 +17,23 @@ jobs:
       - run: .venv/bin/python -m mypy app scripts
       - run: .venv/bin/python -m pytest
 
+  python-packages:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { pkg: ml, mod: sketchlogic_ml }
+          - { pkg: evaluations, mod: sketchlogic_eval }
+    defaults: { run: { working-directory: "${{ matrix.pkg }}" } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv venv --python 3.12 .venv && uv pip install --python .venv -e ".[dev]"
+      - run: .venv/bin/python -m ruff check .
+      - run: .venv/bin/python -m ruff format --check .
+      - run: .venv/bin/python -m mypy ${{ matrix.mod }}
+      - run: .venv/bin/python -m pytest -q
+
   frontend:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: frontend } }

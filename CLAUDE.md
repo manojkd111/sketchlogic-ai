@@ -11,9 +11,9 @@ See `docs/roadmap.md` for what comes next. Don't start model training or AWS wor
 | `frontend/` | Next.js 16 App Router, React 19, Tailwind 4 | npm, Vitest, ESLint, Prettier |
 | `backend/` | FastAPI + Pydantic v2 API, SQLite, NetworkX | uv venv (`backend/.venv`), pytest, ruff, mypy |
 | `shared/` | `schemas/graph.v1.json` (generated), `examples/*.graph.json` | — |
-| `ml/` | (Phase 3) Qwen2.5-VL-3B fine-tuning (Unsloth/PEFT/TRL) + local serving | — |
+| `ml/` | Synthetic data generator (`sketchlogic_ml.synth`); later Qwen2.5-VL-3B fine-tuning + local serving | uv venv (`ml/.venv`), pytest, ruff, mypy |
 | `data/` | Datasets; contents git-ignored; consent policy in README | — |
-| `evaluations/` | Extraction metrics & results | — |
+| `evaluations/` | Scoring harness (`sketchlogic_eval predict/score`); results git-ignored | uv venv (`evaluations/.venv`), pytest, ruff, mypy |
 | `docs/` | `architecture.md`, `graph-schema.md`, `setup-windows-wsl.md`, `roadmap.md`, `adr/` | — |
 | `scripts/` | `setup`, `dev`, `check` in `.ps1` (Windows) and `.sh` (WSL/Linux) | — |
 
@@ -30,6 +30,8 @@ cd backend;  .venv\Scripts\python -m pytest           # backend tests (-m smoke 
 cd frontend; npm test; npm run typecheck; npm run lint; npm run format; npm run build
              npm run e2e     # Playwright; reuses running dev servers locally
                              # (PLAYWRIGHT_CHANNEL=chrome to use installed Chrome)
+cd ml;          .venv\Scripts\python -m sketchlogic_ml.synth --count 200 --seed 0   # synthetic data
+cd evaluations; .venv\Scripts\python -m sketchlogic_eval predict|score ...           # see README
 ```
 
 On Windows, uv may need `UV_SYSTEM_CERTS=1` (HTTPS inspection on this machine).

@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sketchlogic-ml"
+version = "0.1.0"
+description = "SketchLogic ML: synthetic training data now; fine-tuning and local serving later."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "pillow>=11.0",
+  "jsonschema>=4.23",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "ruff>=0.8",
+  "mypy>=1.13",
+  "types-jsonschema",
+]
+# Training/serving deps (Unsloth, PEFT, TRL, torch) are added in a later step, as an extra,
+# only when model work is explicitly started. Nothing here downloads or runs a model.
+
+[project.scripts]
+sketchlogic-synth = "sketchlogic_ml.synth.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sketchlogic_ml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S311"]
+"sketchlogic_ml/synth/**" = ["S311"]  # random is for data generation, not security
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["PIL.*"]
+ignore_missing_imports = true

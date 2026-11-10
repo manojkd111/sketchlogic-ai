@@ -18,6 +18,18 @@ try {
   Step "backend: pytest"      { & $py -m pytest }
 } finally { Pop-Location }
 
+foreach ($pkg in @("ml", "evaluations")) {
+  Push-Location "$root\$pkg"
+  try {
+    $py = ".\.venv\Scripts\python.exe"
+    $mod = if ($pkg -eq "ml") { "sketchlogic_ml" } else { "sketchlogic_eval" }
+    Step "${pkg}: ruff lint"   { & $py -m ruff check . }
+    Step "${pkg}: ruff format" { & $py -m ruff format --check . }
+    Step "${pkg}: mypy"        { & $py -m mypy $mod }
+    Step "${pkg}: pytest"      { & $py -m pytest -q }
+  } finally { Pop-Location }
+}
+
 Push-Location "$root\frontend"
 try {
   Step "frontend: typecheck" { npm run --silent typecheck }

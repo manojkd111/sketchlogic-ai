@@ -18,6 +18,14 @@ try {
   if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 } finally { Pop-Location }
 
+foreach ($pkg in @("ml", "evaluations")) {
+  Push-Location "$root\$pkg"
+  try {
+    if (-not (Test-Path .venv)) { uv venv --python 3.12 .venv }
+    uv pip install --python .venv -e ".[dev]"
+  } finally { Pop-Location }
+}
+
 Push-Location "$root\frontend"
 try {
   npm install

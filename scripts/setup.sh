@@ -11,6 +11,12 @@ cd "$root/backend"
 uv pip install --python .venv -e ".[dev]"
 [ -f .env ] || cp .env.example .env
 
+for pkg in ml evaluations; do
+  cd "$root/$pkg"
+  [ -d .venv ] || uv venv --python 3.12 .venv
+  uv pip install --python .venv -e ".[dev]"
+done
+
 cd "$root/frontend"
 npm install
 [ -f .env.local ] || cp .env.example .env.local
